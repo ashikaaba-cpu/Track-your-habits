@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>🌿 Habit Tracker</title>
+<style>
+/* ============================================================
+   CSS VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg:          #f5f3ef;
+  --bg2:         #ede9e2;
+  --surface:     #ffffff;
+  --surface2:    #f9f7f4;
+  --border:      #e4dfd6;
+  --text:        #1c1917;
+  --text2:       #78716c;
+  --text3:       #a8a29e;
+  --accent:      #16a34a;
+  --accent-soft: #dcfce7;
+  --accent2:     #f59e0b;
+  --danger:      #ef4444;
+  --danger-soft: #fee2e2;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:   0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.06);
+  --r-sm:        10px;
+  --r-md:        16px;
+  --r-lg:        22px;
+  --r-full:      999px;
+  --font-body:   'Georgia', 'Times New Roman', serif;
+  --font-ui:     -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --transition:  .22s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  --bg:          #141210;
+  --bg2:         #1c1917;
+  --surface:     #242018;
+  --surface2:    #2c2820;
+  --border:      #3a3530;
+  --text:        #fafaf9;
+  --text2:       #a8a29e;
+  --text3:       #78716c;
+  --accent:      #4ade80;
+  --accent-soft: #052e16;
+  --accent2:     #fbbf24;
+  --danger:      #f87171;
+  --danger-soft: #2d0a0a;
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.3);
+  --shadow-md:   0 4px 16px rgba(0,0,0,.4);
+  --shadow-lg:   0 12px 40px rgba(0,0,0,.5);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:16px; scroll-behavior:smooth; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+  overflow-x: hidden;
+}
+
+/* ============================================================
+   BACKGROUND TEXTURE
+   ============================================================ */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:-1;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(22,163,74,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 100%, rgba(245,158,11,.06) 0%, transparent 60%);
+  pointer-events:none;
+}
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%, rgba(74,222,128,.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 100%, rgba(251,191,36,.04) 0%, transparent 60%);
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app { max-width:680px; margin:0 auto; padding:0 16px 120px; }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header {
+  position:sticky; top:0; z-index:50;
+  background: rgba(245,243,239,.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+[data-theme="dark"] header { background: rgba(20,18,16,.85); }
+.header-inner {
+  max-width:680px; margin:0 auto; padding:14px 16px;
+  display:flex; align-items:center; gap:12px;
+}
+.logo { display:flex; align-items:center; gap:8px; }
+.logo-icon { font-size:22px; line-height:1; }
+.logo-text { font-family:var(--font-body); font-size:1.15rem; font-weight:700; color:var(--text); letter-spacing:-.01em; }
+.header-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+
+.stats-pill {
+  display:flex; align-items:center; gap:6px;
+  background: var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-full); padding:5px 12px;
+  font-size:.78rem; font-weight:600; color:var(--text2);
+  box-shadow: var(--shadow-sm);
+}
+.stats-pill .accent { color:var(--accent); font-weight:700; }
+
+.icon-btn {
+  width:36px; height:36px; border-radius:50%;
+  border:1px solid var(--border); background:var(--surface);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:16px; transition: all var(--transition);
+  box-shadow:var(--shadow-sm); color:var(--text);
+}
+.icon-btn:hover { background:var(--bg2); transform:scale(1.08); box-shadow:var(--shadow-md); }
+.icon-btn:active { transform:scale(.95); }
+
+/* ============================================================
+   QUOTE BANNER
+   ============================================================ */
+.quote-banner {
+  margin:20px 0 0;
+  padding:14px 18px;
+  background: var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-md);
+  box-shadow:var(--shadow-sm);
+  display:flex; align-items:flex-start; gap:10px;
+  animation: fadeSlideDown .4s ease both;
+}
+.quote-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+.quote-text { font-family:var(--font-body); font-size:.9rem; color:var(--text2); line-height:1.55; font-style:italic; }
+
+/* ============================================================
+   PROGRESS SECTION
+   ============================================================ */
+.progress-section {
+  margin:16px 0 0;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r-lg);
+  padding:20px;
+  box-shadow:var(--shadow-sm);
+  animation: fadeSlideDown .45s .05s ease both;
+}
+.progress-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.progress-title { font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text3); }
+.progress-count { font-size:1.4rem; font-weight:800; color:var(--text); letter-spacing:-.03em; font-family:var(--font-body); }
+.progress-count span { color:var(--accent); }
+.progress-track {
+  height:8px; border-radius:var(--r-full);
+  background:var(--bg2); overflow:hidden;
+  position:relative;
+}
+.progress-fill {
+  height:100%; border-radius:var(--r-full);
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width .6s cubic-bezier(.34,1.56,.64,1);
+  position:relative;
+}
+.progress-fill::after {
+  content:'';
+  position:absolute; right:0; top:50%; transform:translateY(-50%);
+  width:14px; height:14px; border-radius:50%;
+  background: var(--accent2);
+  box-shadow: 0 0 8px rgba(245,158,11,.5);
+  transition: opacity .3s;
+}
+.progress-fill[style*="width: 0"]::after,
+.progress-fill[style*="width:0"]::after { opacity:0; }
+.progress-pct {
+  margin-top:8px; text-align:right;
+  font-size:.78rem; font-weight:700; color:var(--text3);
+}
+.fire-message {
+  margin-top:12px; padding:8px 12px;
+  background: linear-gradient(135deg, #fff7ed, #fef3c7);
+  border:1px solid #fed7aa; border-radius:var(--r-sm);
+  font-size:.82rem; font-weight:600; color:#92400e;
+  display:none; align-items:center; gap:6px;
+  animation: pulse 2s infinite;
+}
+[data-theme="dark"] .fire-message { background:linear-gradient(135deg,#2d1a00,#2d2200); border-color:#78350f; color:#fbbf24; }
+.fire-message.show { display:flex; }
+
+/* ============================================================
+   SECTION TITLE
+   ============================================================ */
+.section-title {
+  font-size:.78rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--text3);
+  margin:24px 0 10px; padding:0 2px;
+}
+
+/* ============================================================
+   HABIT CARDS
+   ============================================================ */
+.habits-list { display:flex; flex-direction:column; gap:10px; }
+
+.habit-card {
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-md);
+  padding:16px 16px 14px;
+  box-shadow:var(--shadow-sm);
+  display:flex; align-items:center; gap:14px;
+  transition: all var(--transition);
+  animation: habitIn .35s cubic-bezier(.34,1.56,.64,1) both;
+  cursor:default;
+  position:relative; overflow:hidden;
+}
+.habit-card::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0;
+  width:3px;
+  background:var(--accent);
+  border-radius:3px 0 0 3px;
+  transform:scaleY(0);
+  transition:transform .3s ease;
+  transform-origin:bottom;
+}
+.habit-card.done::before { transform:scaleY(1); }
+.habit-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); border-color:var(--accent); }
+.habit-card.done {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+[data-theme="dark"] .habit-card.done { background:var(--accent-soft); }
+.habit-card.deleting { animation: habitOut .3s ease forwards; }
+
+/* Checkbox */
+.check-btn {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  border:2px solid var(--border); background:transparent;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:all var(--transition); font-size:14px; color:transparent;
+}
+.check-btn:hover { border-color:var(--accent); background:var(--accent-soft); color:var(--accent); transform:scale(1.1); }
+.habit-card.done .check-btn {
+  background:var(--accent); border-color:var(--accent);
+  color:#fff; transform:scale(1.05);
+  box-shadow:0 2px 8px rgba(22,163,74,.35);
+}
+.check-btn:active { transform:scale(.9); }
+
+/* Info */
+.habit-info { flex:1; min-width:0; }
+.habit-name {
+  font-size:.95rem; font-weight:600; color:var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  transition:color var(--transition);
+}
+.habit-card.done .habit-name { color:var(--accent); text-decoration:line-through; text-decoration-color:rgba(22,163,74,.4); }
+[data-theme="dark"] .habit-card.done .habit-name { color:var(--accent); }
+.habit-meta { display:flex; gap:8px; margin-top:5px; flex-wrap:wrap; }
+.streak-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:.72rem; font-weight:700; padding:2px 8px;
+  border-radius:var(--r-full);
+  background:var(--bg2); color:var(--text2);
+  border:1px solid var(--border);
+  transition:all var(--transition);
+}
+.streak-badge.hot {
+  background:linear-gradient(135deg,#fff7ed,#fef3c7);
+  color:#b45309; border-color:#fcd34d;
+}
+[data-theme="dark"] .streak-badge.hot { background:linear-gradient(135deg,#2d1a00,#2d2200); color:#fbbf24; border-color:#78350f; }
+.best-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:.72rem; font-weight:600; padding:2px 8px;
+  border-radius:var(--r-full);
+  background:var(--surface2); color:var(--text3);
+  border:1px solid var(--border);
+}
+
+/* Actions */
+.habit-actions { display:flex; gap:4px; flex-shrink:0; opacity:0; transition:opacity var(--transition); }
+.habit-card:hover .habit-actions { opacity:1; }
+.act-btn {
+  width:28px; height:28px; border-radius:8px;
+  border:1px solid var(--border); background:var(--surface2);
+  cursor:pointer; font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all var(--transition); color:var(--text2);
+}
+.act-btn:hover { box-shadow:var(--shadow-sm); transform:scale(1.1); }
+.act-btn.del:hover { background:var(--danger-soft); border-color:var(--danger); color:var(--danger); }
+.act-btn.edit:hover { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+
+/* ============================================================
+   EDIT INPUT (inline)
+   ============================================================ */
+.habit-name-input {
+  font-size:.95rem; font-weight:600;
+  background:transparent; border:none; outline:none;
+  color:var(--text); width:100%;
+  border-bottom:2px solid var(--accent);
+  padding:1px 0; font-family:var(--font-ui);
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+  text-align:center; padding:56px 24px;
+  animation: fadeSlideDown .4s .1s ease both;
+}
+.empty-icon { font-size:56px; margin-bottom:16px; display:block; }
+.empty-title { font-family:var(--font-body); font-size:1.25rem; font-weight:700; color:var(--text); margin-bottom:8px; }
+.empty-sub { font-size:.88rem; color:var(--text3); line-height:1.6; }
+
+/* ============================================================
+   ADD HABIT MODAL
+   ============================================================ */
+.modal-overlay {
+  position:fixed; inset:0; z-index:100;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px);
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none;
+  transition:opacity .25s ease;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-box {
+  background:var(--surface);
+  border-radius:var(--r-lg) var(--r-lg) 0 0;
+  padding:28px 24px 36px;
+  width:100%; max-width:680px;
+  box-shadow:var(--shadow-lg);
+  transform:translateY(30px);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  border-top:1px solid var(--border);
+}
+.modal-overlay.open .modal-box { transform:translateY(0); }
+.modal-title { font-family:var(--font-body); font-size:1.1rem; font-weight:700; margin-bottom:18px; color:var(--text); }
+.modal-input-wrap { position:relative; }
+.modal-input {
+  width:100%; padding:14px 16px;
+  font-size:1rem; font-family:var(--font-ui);
+  background:var(--bg2); border:1.5px solid var(--border);
+  border-radius:var(--r-md); color:var(--text);
+  outline:none; transition:border-color var(--transition);
+}
+.modal-input:focus { border-color:var(--accent); background:var(--surface2); }
+.modal-input::placeholder { color:var(--text3); }
+.modal-actions { display:flex; gap:10px; margin-top:14px; }
+.btn-primary {
+  flex:1; padding:13px;
+  background:var(--accent); color:#fff;
+  border:none; border-radius:var(--r-md);
+  font-size:.95rem; font-weight:700; cursor:pointer;
+  transition:all var(--transition); font-family:var(--font-ui);
+  box-shadow:0 2px 8px rgba(22,163,74,.3);
+}
+.btn-primary:hover { filter:brightness(1.08); transform:translateY(-1px); box-shadow:0 4px 16px rgba(22,163,74,.4); }
+.btn-primary:active { transform:scale(.97); }
+.btn-secondary {
+  padding:13px 20px;
+  background:var(--surface2); color:var(--text2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r-md);
+  font-size:.95rem; font-weight:600; cursor:pointer;
+  transition:all var(--transition); font-family:var(--font-ui);
+}
+.btn-secondary:hover { background:var(--bg2); }
+
+/* ============================================================
+   FAB
+   ============================================================ */
+.fab {
+  position:fixed; bottom:28px; right:24px; z-index:60;
+  width:56px; height:56px; border-radius:50%;
+  background:var(--accent); color:#fff;
+  border:none; cursor:pointer;
+  box-shadow:0 4px 20px rgba(22,163,74,.45);
+  font-size:26px; display:flex; align-items:center; justify-content:center;
+  transition:all var(--transition);
+}
+.fab:hover { transform:scale(1.1) rotate(8deg); box-shadow:0 6px 28px rgba(22,163,74,.55); }
+.fab:active { transform:scale(.95); }
+.fab span { display:block; transition:transform .25s ease; }
+.fab.open span { transform:rotate(45deg); }
+
+/* ============================================================
+   CONFETTI
+   ============================================================ */
+#confetti-canvas {
+  position:fixed; inset:0; z-index:200;
+  pointer-events:none;
+}
+.all-done-toast {
+  position:fixed; top:80px; left:50%; transform:translateX(-50%) translateY(-20px);
+  z-index:201;
+  background:linear-gradient(135deg,#052e16,#166534);
+  color:#bbf7d0; padding:14px 24px; border-radius:var(--r-full);
+  font-size:.9rem; font-weight:700;
+  box-shadow:var(--shadow-lg); opacity:0;
+  transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  white-space:nowrap;
+}
+.all-done-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+@keyframes fadeSlideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+@keyframes habitIn { from { opacity:0; transform:scale(.94) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes habitOut { to { opacity:0; transform:scale(.9) translateX(20px); max-height:0; margin:0; padding:0; border:none; } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.75; } }
+@keyframes pop { 0% { transform:scale(1); } 40% { transform:scale(1.18); } 100% { transform:scale(1); } }
+@keyframes checkPop { 0% { transform:scale(1); } 30% { transform:scale(1.3); } 100% { transform:scale(1.05); } }
+
+.pop-anim { animation:pop .4s ease; }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(min-width:500px) {
+  .modal-overlay { align-items:center; }
+  .modal-box { border-radius:var(--r-lg); max-width:440px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────── -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🌿</span>
+      <span class="logo-text">Habit Tracker</span>
+    </div>
+    <div class="header-right">
+      <div class="stats-pill" id="headerStats">
+        <span class="accent" id="headerDone">0</span>/<span id="headerTotal">0</span> today
+      </div>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme">🌙</button>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN APP ─────────────────────────────────────────────── -->
+<main class="app">
+
+  <!-- Quote -->
+  <div class="quote-banner" id="quoteBanner">
+    <span class="quote-icon">💬</span>
+    <span class="quote-text" id="quoteText">Loading inspiration…</span>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-section">
+    <div class="progress-header">
+      <span class="progress-title">Today's Progress</span>
+      <span class="progress-count" id="progressCount"><span id="pDone">0</span>&nbsp;/&nbsp;<span id="pTotal">0</span></span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-pct" id="progressPct">0% complete</div>
+    <div class="fire-message" id="fireMsg">🔥 You're on fire! Keep that streak alive!</div>
+  </div>
+
+  <!-- Habits -->
+  <p class="section-title">My Habits</p>
+  <div class="habits-list" id="habitsList"></div>
+
+</main>
+
+<!-- ── FAB ──────────────────────────────────────────────────── -->
+<button class="fab" id="fabBtn" title="Add habit"><span>+</span></button>
+
+<!-- ── ADD MODAL ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <p class="modal-title">New Habit</p>
+    <div class="modal-input-wrap">
+      <input class="modal-input" id="habitInput" type="text"
+             placeholder="e.g. Read 20 minutes, Drink water…" maxlength="60" autocomplete="off" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modalCancel">Cancel</button>
+      <button class="btn-primary" id="modalAdd">Add Habit ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFETTI ─────────────────────────────────────────────── -->
+<canvas id="confetti-canvas"></canvas>
+<div class="all-done-toast" id="allDoneToast">🎉 All habits done — incredible work today!</div>
+
+<script>
+/* ============================================================
+   DATA & CONSTANTS
+   ============================================================ */
+const QUOTES = [
+  "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
+  "Small daily improvements over time lead to stunning results.",
+  "Motivation gets you started. Habit keeps you going.",
+  "The secret of your future is hidden in your daily routine.",
+  "You don't rise to the level of your goals, you fall to the level of your systems.",
+  "Consistency is the hallmark of the unexceptional.",
+  "Every action you take is a vote for the type of person you wish to become.",
+  "Success is the sum of small efforts, repeated day in and day out.",
+  "Your habits will determine your future.",
+  "The only way to fail is to stop showing up.",
+  "Discipline is just choosing between what you want now and what you want most.",
+  "A year from now you'll wish you had started today.",
+];
+
+const STORAGE_KEYS = { habits:'ht_habits', theme:'ht_theme', date:'ht_lastDate' };
+
+let habits = [];          // Array of habit objects
+let darkMode = false;
+let allDoneShown = false; // Guard so confetti fires once per day
+
+/* ── Habit schema ──────────────────────────────────────────── *
+ * {
+ *   id:        string   (timestamp-based)
+ *   name:      string
+ *   done:      boolean  (today)
+ *   streak:    number   (current daily streak)
+ *   best:      number   (best streak ever)
+ *   lastDate:  string   (ISO date the habit was last marked done)
+ * }
+ */
+
+/* ============================================================
+   STORAGE HELPERS
+   ============================================================ */
+const save = () => localStorage.setItem(STORAGE_KEYS.habits, JSON.stringify(habits));
+const load = () => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.habits)) || []; } catch { return []; }
+};
+
+/* ============================================================
+   DATE HELPERS
+   ============================================================ */
+const todayStr  = () => new Date().toISOString().slice(0, 10);          // "YYYY-MM-DD"
+const yesterday = () => {
+  const d = new Date(); d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
+
+/* ============================================================
+   DAILY RESET
+   Checks if stored habits belong to a previous day; resets
+   completion flags but preserves/adjusts streaks.
+   ============================================================ */
+function dailyReset() {
+  const today     = todayStr();
+  const prevDate  = localStorage.getItem(STORAGE_KEYS.date);
+  if (prevDate === today) return; // Same day, nothing to do
+
+  // New day — reset completion & handle streak logic
+  habits.forEach(h => {
+    if (h.done) {
+      // Was done yesterday → streak stays (incremented when marked done)
+      // We don't increment again; just leave streak as-is
+    } else {
+      // Was NOT done yesterday → break streak if lastDate < yesterday
+      if (h.lastDate && h.lastDate < yesterday()) {
+        h.streak = 0;
+      }
+    }
+    h.done = false; // Reset for new day
+  });
+
+  localStorage.setItem(STORAGE_KEYS.date, today);
+  allDoneShown = false;
+  save();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  const list = document.getElementById('habitsList');
+  list.innerHTML = '';
+
+  if (habits.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🌱</span>
+        <p class="empty-title">No habits yet — start your growth journey</p>
+        <p class="empty-sub">Tap the <strong>+</strong> button below to add your first habit.<br>Small steps lead to big change.</p>
+      </div>`;
+  } else {
+    habits.forEach(h => list.appendChild(createCard(h)));
+  }
+
+  updateProgress();
+}
+
+/* ── Build a single habit card DOM element ─────────────────── */
+function createCard(habit) {
+  const card = document.createElement('div');
+  card.className = 'habit-card' + (habit.done ? ' done' : '');
+  card.dataset.id = habit.id;
+
+  const isHot = habit.streak >= 3;
+
+  card.innerHTML = `
+    <button class="check-btn" title="${habit.done ? 'Mark incomplete' : 'Mark done'}">
+      ${habit.done ? '✓' : ''}
+    </button>
+    <div class="habit-info">
+      <div class="habit-name" data-field="name">${escapeHTML(habit.name)}</div>
+      <div class="habit-meta">
+        <span class="streak-badge ${isHot ? 'hot' : ''}">
+          ${isHot ? '🔥' : '⚡'} ${habit.streak} day streak
+        </span>
+        <span class="best-badge">🏆 Best: ${habit.best}</span>
+      </div>
+    </div>
+    <div class="habit-actions">
+      <button class="act-btn edit" title="Edit">✏️</button>
+      <button class="act-btn del"  title="Delete">🗑</button>
+    </div>`;
+
+  /* Check button */
+  card.querySelector('.check-btn').addEventListener('click', () => toggleDone(habit.id));
+
+  /* Edit button */
+  card.querySelector('.act-btn.edit').addEventListener('click', () => startEdit(habit.id, card));
+
+  /* Delete button */
+  card.querySelector('.act-btn.del').addEventListener('click', () => deleteHabit(habit.id, card));
+
+  return card;
+}
+
+/* ── Progress bar & header stats ──────────────────────────── */
+function updateProgress() {
+  const total   = habits.length;
+  const done    = habits.filter(h => h.done).length;
+  const pct     = total ? Math.round((done / total) * 100) : 0;
+  const anyHot  = habits.some(h => h.streak >= 3);
+
+  document.getElementById('pDone').textContent  = done;
+  document.getElementById('pTotal').textContent = total;
+  document.getElementById('headerDone').textContent  = done;
+  document.getElementById('headerTotal').textContent = total;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent  = pct + '% complete';
+
+  // "On fire" banner
+  document.getElementById('fireMsg').classList.toggle('show', anyHot);
+
+  // All-done confetti
+  if (total > 0 && done === total && !allDoneShown) {
+    allDoneShown = true;
+    triggerAllDone();
+  }
+}
+
+/* ============================================================
+   HABIT CRUD
+   ============================================================ */
+function addHabit(name) {
+  name = name.trim();
+  if (!name) return;
+  const h = {
+    id:       Date.now().toString(),
+    name,
+    done:     false,
+    streak:   0,
+    best:     0,
+    lastDate: null,
+  };
+  habits.push(h);
+  save();
+  render();
+}
+
+function toggleDone(id) {
+  const h = habits.find(x => x.id === id);
+  if (!h) return;
+  const today = todayStr();
+
+  if (!h.done) {
+    // Mark done
+    h.done = true;
+    // Increment streak only if not already done today
+    if (h.lastDate !== today) {
+      h.streak++;
+      if (h.streak > h.best) h.best = h.streak;
+      h.lastDate = today;
+    }
+  } else {
+    // Un-mark done
+    h.done = false;
+    if (h.lastDate === today) {
+      h.streak = Math.max(0, h.streak - 1);
+      h.lastDate = habits.find(x => x.id === id)?.lastDate || null;
+    }
+  }
+
+  save();
+
+  // Animate the card
+  const card = document.querySelector(`.habit-card[data-id="${id}"]`);
+  if (card) {
+    card.classList.toggle('done', h.done);
+    const cb = card.querySelector('.check-btn');
+    cb.textContent = h.done ? '✓' : '';
+    if (h.done) {
+      cb.style.animation = 'none';
+      requestAnimationFrame(() => { cb.style.animation = 'checkPop .35s ease'; });
+    }
+    // Refresh badges
+    const isHot = h.streak >= 3;
+    const sb = card.querySelector('.streak-badge');
+    sb.className = 'streak-badge' + (isHot ? ' hot' : '');
+    sb.innerHTML = `${isHot ? '🔥' : '⚡'} ${h.streak} day streak`;
+    card.querySelector('.best-badge').textContent = `🏆 Best: ${h.best}`;
+    card.querySelector('.habit-name').style.textDecoration = h.done ? '' : '';
+  }
+  updateProgress();
+}
+
+function deleteHabit(id, card) {
+  card.classList.add('deleting');
+  card.addEventListener('animationend', () => {
+    habits = habits.filter(x => x.id !== id);
+    save();
+    render();
+  }, { once: true });
+}
+
+function startEdit(id, card) {
+  const h = habits.find(x => x.id === id);
+  if (!h) return;
+  const nameEl = card.querySelector('[data-field="name"]');
+  const orig   = h.name;
+
+  // Replace with input
+  const inp = document.createElement('input');
+  inp.className = 'habit-name-input';
+  inp.value = orig;
+  nameEl.replaceWith(inp);
+  inp.focus(); inp.select();
+
+  const commit = () => {
+    const v = inp.value.trim() || orig;
+    h.name = v;
+    save();
+    const span = document.createElement('div');
+    span.className = 'habit-name';
+    span.dataset.field = 'name';
+    span.textContent = v;
+    inp.replaceWith(span);
+  };
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { inp.blur(); }
+    if (e.key === 'Escape') { inp.value = orig; inp.blur(); }
+  });
+}
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+const modalOverlay = document.getElementById('modalOverlay');
+const habitInput   = document.getElementById('habitInput');
+const fabBtn       = document.getElementById('fabBtn');
+
+function openModal() {
+  modalOverlay.classList.add('open');
+  fabBtn.classList.add('open');
+  habitInput.value = '';
+  requestAnimationFrame(() => habitInput.focus());
+}
+function closeModal() {
+  modalOverlay.classList.remove('open');
+  fabBtn.classList.remove('open');
+}
+
+fabBtn.addEventListener('click', () => modalOverlay.classList.contains('open') ? closeModal() : openModal());
+document.getElementById('modalCancel').addEventListener('click', closeModal);
+document.getElementById('modalAdd').addEventListener('click', () => {
+  const v = habitInput.value.trim();
+  if (!v) { habitInput.focus(); return; }
+  addHabit(v);
+  closeModal();
+});
+habitInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('modalAdd').click();
+  if (e.key === 'Escape') closeModal();
+});
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+const themeBtn = document.getElementById('themeToggle');
+function applyTheme(dark) {
+  darkMode = dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  themeBtn.textContent = dark ? '☀️' : '🌙';
+  localStorage.setItem(STORAGE_KEYS.theme, dark ? 'dark' : 'light');
+}
+themeBtn.addEventListener('click', () => applyTheme(!darkMode));
+
+/* ============================================================
+   DAILY QUOTE
+   ============================================================ */
+function setQuote() {
+  const day = Math.floor(Date.now() / 86400000);
+  const q   = QUOTES[day % QUOTES.length];
+  document.getElementById('quoteText').textContent = q;
+}
+
+/* ============================================================
+   CONFETTI ENGINE (vanilla canvas)
+   ============================================================ */
+const confCanvas = document.getElementById('confetti-canvas');
+const confCtx    = confCanvas.getContext('2d');
+let particles    = [];
+let confRunning  = false;
+
+function initConf() {
+  confCanvas.width  = window.innerWidth;
+  confCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', initConf);
+initConf();
+
+function spawnParticles(n) {
+  const colors = ['#16a34a','#4ade80','#f59e0b','#fbbf24','#60a5fa','#f472b6','#a78bfa','#34d399'];
+  for (let i = 0; i < n; i++) {
+    particles.push({
+      x:   Math.random() * confCanvas.width,
+      y:   Math.random() * confCanvas.height * -.3,
+      r:   Math.random() * 7 + 3,
+      d:   Math.random() * 4 + 1,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 10 - 5,
+      tiltA: Math.random() * .15 + .05,
+      tiltDir: Math.random() > .5 ? 1 : -1,
+      rot: Math.random() * Math.PI * 2,
+      rotS: (Math.random() - .5) * .15,
+      vx: (Math.random() - .5) * 3,
+      vy: Math.random() * 2 + 1,
+      opacity: 1,
+    });
+  }
+}
+
+function drawConf() {
+  if (!confRunning) return;
+  confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+  particles.forEach(p => {
+    confCtx.save();
+    confCtx.globalAlpha = p.opacity;
+    confCtx.translate(p.x, p.y);
+    confCtx.rotate(p.rot);
+    confCtx.fillStyle = p.color;
+    confCtx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 2.5);
+    confCtx.restore();
+
+    p.x   += p.vx;
+    p.y   += p.vy + p.d * .3;
+    p.rot += p.rotS;
+    p.tilt += p.tiltA * p.tiltDir;
+    if (Math.abs(p.tilt) > 8) p.tiltDir *= -1;
+    if (p.y > confCanvas.height * 1.1) p.opacity -= .05;
+  });
+  particles = particles.filter(p => p.opacity > 0);
+  if (particles.length === 0) {
+    confRunning = false;
+    confCtx.clearRect(0, 0, confCanvas.width, confCanvas.height);
+    return;
+  }
+  requestAnimationFrame(drawConf);
+}
+
+function triggerAllDone() {
+  const toast = document.getElementById('allDoneToast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 4000);
+
+  confRunning = true;
+  spawnParticles(180);
+  drawConf();
+}
+
+/* ============================================================
+   ESCAPE HTML
+   ============================================================ */
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function init() {
+  // Restore theme
+  const savedTheme = localStorage.getItem(STORAGE_KEYS.theme);
+  applyTheme(savedTheme === 'dark');
+
+  // Load habits
+  habits = load();
+
+  // Daily reset check
+  if (!localStorage.getItem(STORAGE_KEYS.date)) {
+    localStorage.setItem(STORAGE_KEYS.date, todayStr());
+  }
+  dailyReset();
+
+  // Quote
+  setQuote();
+
+  // Render
+  render();
+})();
+</script>
+</body>
+</html>
